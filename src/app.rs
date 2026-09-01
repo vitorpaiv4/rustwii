@@ -166,6 +166,9 @@ body {
 
 .wii-pairing-float-bar {
     margin-top: 4px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
 }
 
 .btn-wii-pair {
@@ -183,6 +186,43 @@ body {
 
 .btn-wii-pair:hover {
     transform: scale(1.03);
+}
+
+.btn-wii-direct-link {
+    background: #ffffff;
+    border: 2px solid #0284c7;
+    color: #0284c7;
+    font-weight: bold;
+    font-size: 0.9rem;
+    padding: 6px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.btn-wii-direct-link:hover {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.wii-pairing-url-link {
+    display: inline-block;
+    margin-top: 6px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #0284c7;
+    background: #f0f7fb;
+    padding: 8px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    border: 2px solid #bae6fd;
+}
+
+.wii-pairing-url-link:hover {
+    background: #e0f2fe;
 }
 
 /* Wii System Bottom Bar */

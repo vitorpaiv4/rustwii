@@ -28,6 +28,13 @@ pub const CHANNELS: [WiiChannelData; 12] = [
         is_playable: true,
     },
     WiiChannelData {
+        id: "pairing_channel",
+        title: "Parear Wiimote",
+        subtitle: "Conecte seu smartphone via QR Code para usar como controle",
+        icon: "📱",
+        is_playable: false,
+    },
+    WiiChannelData {
         id: "mii_channel",
         title: "Canal Mii",
         subtitle: "Crie e personalize avatares dos jogadores",
@@ -46,13 +53,6 @@ pub const CHANNELS: [WiiChannelData; 12] = [
         title: "Canal Notícias",
         subtitle: "Principais manchetes e acontecimentos do mundo",
         icon: "📰",
-        is_playable: false,
-    },
-    WiiChannelData {
-        id: "photo",
-        title: "Canal Fotos",
-        subtitle: "Visualize e brinque com suas fotos favoritas",
-        icon: "🖼️",
         is_playable: false,
     },
     WiiChannelData { id: "empty_7", title: "Canal Vazio", subtitle: "Espaço disponível", icon: "📺", is_playable: false },
@@ -75,7 +75,11 @@ pub fn WiiMenu(
 
     let mut select_channel = move |channel: WiiChannelData| {
         play_click();
-        selected_channel.set(Some(channel));
+        if channel.id == "pairing_channel" {
+            show_pairing_modal.set(true);
+        } else {
+            selected_channel.set(Some(channel));
+        }
     };
 
     let close_modal = move |_| {
@@ -117,7 +121,7 @@ pub fn WiiMenu(
                 }
             }
 
-            // Floating QR Code Pairing Toggle Button
+            // Floating QR Code Pairing Toggle Button & Direct Link
             div {
                 class: "wii-pairing-float-bar",
                 button {
@@ -128,6 +132,12 @@ pub fn WiiMenu(
                         show_pairing_modal.set(!curr);
                     },
                     "📱 Parear Smartphone (QR Code)"
+                }
+                a {
+                    class: "btn-wii-direct-link",
+                    href: "{remote_url}",
+                    target: "_blank",
+                    "🔗 Abrir Controle em Nova Aba"
                 }
             }
 
@@ -142,7 +152,12 @@ pub fn WiiMenu(
                         h2 { "🎮 Pareamento de Controles" }
                         p { "Aponte a câmera do celular para conectar como Wii Remote:" }
                         QrCodeView { url: remote_url.clone() }
-                        code { "{remote_url}" }
+                        a {
+                            class: "wii-pairing-url-link",
+                            href: "{remote_url}",
+                            target: "_blank",
+                            "{remote_url} ↗"
+                        }
                         button {
                             class: "btn-wii-dialog-back",
                             onclick: move |_| show_pairing_modal.set(false),
