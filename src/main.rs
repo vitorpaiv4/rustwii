@@ -1,3 +1,5 @@
+use rustwii::App;
+
 fn main() {
-    println!("Hello, world!");
+    dioxus::launch(App);
 }

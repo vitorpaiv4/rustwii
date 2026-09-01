@@ -1,0 +1,12 @@
+[application]
+name = "rustwii"
+default_platform = "web"
+out_dir = "dist"
+asset_dir = "assets"
+
+[web.app]
+title = "RustWii - Wii Experience in Pure Rust"
+
+[web.watcher]
+reload_html = true
+watch_path = ["src", "assets"]
