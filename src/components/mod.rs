@@ -1,1 +1,3 @@
-// Shared UI components across screen and remote views
+pub mod cursor;
+
+pub use cursor::WiiCursor;

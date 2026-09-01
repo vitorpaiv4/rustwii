@@ -110,20 +110,68 @@ body {
     border-radius: 20px;
     height: 130px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     text-align: center;
     padding: 16px;
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1rem;
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
 }
 
-.wii-channel-slot:hover {
+.channel-icon {
+    font-size: 1.8rem;
+}
+
+.wii-channel-slot:hover, .wii-channel-slot.channel-active {
     border-color: #00a8e8;
-    transform: scale(1.04);
-    box-shadow: 0 8px 20px rgba(0,168,232,0.2);
+    transform: scale(1.05);
+    box-shadow: 0 8px 24px rgba(0,168,232,0.25);
+}
+
+.channel-active {
+    background: #f0f9ff;
+}
+
+/* ========================================================= */
+/* Wii Cursor Styles                                          */
+/* ========================================================= */
+.wii-cursor-wrapper {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.05s linear;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wii-cursor-clicking {
+    filter: brightness(1.15);
+}
+
+.wii-cursor-ripple {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border: 3px solid;
+    border-radius: 50%;
+    animation: ripple-pulse 0.4s ease-out infinite;
+}
+
+@keyframes ripple-pulse {
+    0% {
+        transform: scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
 }
 
 .screen-footer {

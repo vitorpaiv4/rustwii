@@ -1,5 +1,6 @@
 pub mod app;
 pub mod components;
+pub mod inertial;
 pub mod net;
 pub mod route;
 pub mod sensors;

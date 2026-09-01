@@ -1,4 +1,6 @@
 use dioxus::prelude::*;
+use crate::components::WiiCursor;
+use crate::inertial::CursorState;
 #[cfg(target_arch = "wasm32")]
 use crate::net::build_ws_url;
 #[cfg(target_arch = "wasm32")]
@@ -35,6 +37,16 @@ pub fn ScreenView() -> Element {
         PlayerSlotState::default(),
     ]);
 
+    #[allow(unused_mut)]
+    let mut cursors = use_signal(|| [
+        CursorState::new(1),
+        CursorState::new(2),
+        CursorState::new(3),
+        CursorState::new(4),
+    ]);
+
+    let mut active_channel = use_signal(|| Option::<&'static str>::None);
+
     // Connect as screen host over WebSocket
     #[allow(unused_variables)]
     let room_code_for_hook = room_code.read().clone();
@@ -48,25 +60,33 @@ pub fn ScreenView() -> Element {
                     ServerMessage::PlayerConnected { player_id, .. } => {
                         if player_id >= 1 && player_id <= 4 {
                             players.write()[player_id - 1].connected = true;
+                            cursors.write()[player_id - 1].set_active(true);
                         }
                     }
                     ServerMessage::PlayerDisconnected { player_id, .. } => {
                         if player_id >= 1 && player_id <= 4 {
                             players.write()[player_id - 1].connected = false;
+                            cursors.write()[player_id - 1].set_active(false);
                         }
                     }
                     ServerMessage::PlayerMotion { player_id, orientation } => {
                         if player_id >= 1 && player_id <= 4 {
-                            let mut p = players.write();
-                            p[player_id - 1].connected = true;
-                            p[player_id - 1].orientation = orientation;
+                            players.write()[player_id - 1].connected = true;
+                            players.write()[player_id - 1].orientation = orientation;
+                            cursors.write()[player_id - 1].update_orientation(&orientation);
                         }
                     }
                     ServerMessage::PlayerButton { player_id, button, action } => {
                         if player_id >= 1 && player_id <= 4 {
-                            let mut p = players.write();
-                            p[player_id - 1].connected = true;
-                            p[player_id - 1].last_button = Some((button, action));
+                            let is_press = action == ButtonAction::Press;
+                            players.write()[player_id - 1].connected = true;
+                            players.write()[player_id - 1].last_button = Some((button, action));
+
+                            match button {
+                                RemoteButton::A => cursors.write()[player_id - 1].set_click(is_press),
+                                RemoteButton::B => cursors.write()[player_id - 1].set_trigger(is_press),
+                                _ => {}
+                            }
                         }
                     }
                     _ => {}
@@ -79,10 +99,17 @@ pub fn ScreenView() -> Element {
     });
 
     let player_slots = players.read();
+    let current_cursors = cursors.read();
 
     rsx! {
         div {
             class: "screen-container",
+
+            // Render Multiplayer Wii Cursors
+            for cursor in current_cursors.iter() {
+                WiiCursor { cursor: cursor.clone() }
+            }
+
             header {
                 class: "screen-header",
                 div {
@@ -106,10 +133,30 @@ pub fn ScreenView() -> Element {
 
                 div {
                     class: "wii-grid-placeholder",
-                    div { class: "wii-channel-slot", "Canal 1: RustWii Play" }
-                    div { class: "wii-channel-slot", "Canal 2: Mii Studio" }
-                    div { class: "wii-channel-slot", "Canal 3: Tiro ao Alvo" }
-                    div { class: "wii-channel-slot", "Canal 4: Configurações" }
+                    div {
+                        class: if *active_channel.read() == Some("wii_play") { "wii-channel-slot channel-active" } else { "wii-channel-slot" },
+                        onclick: move |_| active_channel.set(Some("wii_play")),
+                        div { class: "channel-icon", "🎯" }
+                        span { "Canal 1: RustWii Play" }
+                    }
+                    div {
+                        class: if *active_channel.read() == Some("mii") { "wii-channel-slot channel-active" } else { "wii-channel-slot" },
+                        onclick: move |_| active_channel.set(Some("mii")),
+                        div { class: "channel-icon", "👤" }
+                        span { "Canal 2: Mii Studio" }
+                    }
+                    div {
+                        class: if *active_channel.read() == Some("target") { "wii-channel-slot channel-active" } else { "wii-channel-slot" },
+                        onclick: move |_| active_channel.set(Some("target")),
+                        div { class: "channel-icon", "🏹" }
+                        span { "Canal 3: Tiro ao Alvo" }
+                    }
+                    div {
+                        class: if *active_channel.read() == Some("settings") { "wii-channel-slot channel-active" } else { "wii-channel-slot" },
+                        onclick: move |_| active_channel.set(Some("settings")),
+                        div { class: "channel-icon", "⚙️" }
+                        span { "Canal 4: Configurações" }
+                    }
                 }
             }
 
@@ -120,7 +167,10 @@ pub fn ScreenView() -> Element {
                         class: if p.connected { "player-slot-status slot-online" } else { "player-slot-status slot-offline" },
                         div { class: "slot-header", b { "P{idx + 1}" } span { if p.connected { "Online" } else { "Desconectado" } } }
                         if p.connected {
-                            div { class: "slot-orientation", "Yaw: {p.orientation.alpha:.0}° | Pitch: {p.orientation.beta:.0}°" }
+                            div {
+                                class: "slot-orientation",
+                                "Yaw: {p.orientation.alpha:.0}° | Pitch: {p.orientation.beta:.0}° | Roll: {p.orientation.gamma:.0}°"
+                            }
                             if let Some((btn, act)) = p.last_button {
                                 div { class: "slot-button", "Botão: {btn:?} ({act:?})" }
                             }
