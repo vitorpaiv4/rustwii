@@ -10,6 +10,7 @@ serde_json = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 futures-util = "0.3"
+futures-channel = "0.3"
 
 # Client-side (WASM) dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -23,12 +24,14 @@ web-sys = { version = "0.3", features = [
     "CanvasRenderingContext2d",
     "DeviceOrientationEvent",
     "DeviceMotionEvent",
+    "Location",
     "Navigator",
     "console",
 ] }
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
+gloo-net = { version = "0.6", features = ["websocket"] }
 
 # Server-side dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]

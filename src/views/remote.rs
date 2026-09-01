@@ -1,10 +1,25 @@
 use dioxus::prelude::*;
+#[cfg(target_arch = "wasm32")]
+use crate::net::build_ws_url;
 use crate::sensors::{haptic_medium, haptic_rumble, haptic_tap, CalibrationOffset};
-use crate::types::{ButtonAction, OrientationData, RemoteButton};
+#[cfg(target_arch = "wasm32")]
+use crate::types::ServerMessage;
+use crate::types::{ButtonAction, ClientMessage, OrientationData, RemoteButton};
+
+#[cfg(target_arch = "wasm32")]
+use futures_channel::mpsc;
+#[cfg(target_arch = "wasm32")]
+use std::cell::RefCell;
+#[cfg(target_arch = "wasm32")]
+use std::rc::Rc;
 
 #[component]
 pub fn RemoteView(room_id: String) -> Element {
     let mut sensor_active = use_signal(|| false);
+    #[allow(unused_mut)]
+    let mut is_connected = use_signal(|| false);
+    #[allow(unused_mut)]
+    let mut player_id = use_signal(|| Option::<usize>::None);
     let mut status_message = use_signal(|| "Toque para ativar os sensores de movimento".to_string());
     #[allow(unused_mut)]
     let mut raw_orientation = use_signal(|| OrientationData { alpha: 0.0, beta: 0.0, gamma: 0.0 });
@@ -12,7 +27,61 @@ pub fn RemoteView(room_id: String) -> Element {
     let mut calibration = use_signal(CalibrationOffset::default);
     let mut last_action = use_signal(|| "-".to_string());
 
-    // Helper for button feedback
+    #[cfg(target_arch = "wasm32")]
+    let ws_sender = use_signal(|| Rc::new(RefCell::new(Option::<mpsc::UnboundedSender<ClientMessage>>::None)));
+
+    // Connect to WebSocket on startup (WASM)
+    #[allow(unused_variables)]
+    let room_id_for_hook = room_id.clone();
+    use_effect(move || {
+        #[cfg(target_arch = "wasm32")]
+        {
+            let url = build_ws_url(&room_id_for_hook, "remote");
+            let sender_holder = ws_sender.read().clone();
+
+            let res = crate::net::ws_client::wasm::WsConnection::connect(
+                &url,
+                move |msg| match msg {
+                    ServerMessage::RoomJoined { player_id: pid, .. } => {
+                        player_id.set(Some(pid));
+                        status_message.set(format!("Conectado como Jogador P{}!", pid));
+                        haptic_medium();
+                    }
+                    ServerMessage::Error { message } => {
+                        status_message.set(format!("Erro: {}", message));
+                    }
+                    _ => {}
+                },
+                move |connected, status| {
+                    is_connected.set(connected);
+                    if !connected {
+                        player_id.set(None);
+                    }
+                    status_message.set(status);
+                },
+            );
+
+            if let Ok(conn) = res {
+                *sender_holder.borrow_mut() = Some(conn.sender);
+            }
+        }
+    });
+
+    // Helper to send messages over WebSocket
+    let send_ws_message = move |msg: ClientMessage| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(ref sender) = *ws_sender.read().borrow() {
+                let _ = sender.unbounded_send(msg);
+            }
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            let _ = msg;
+        }
+    };
+
+    // Helper for button feedback and dispatch
     let mut handle_button = move |button: RemoteButton, action: ButtonAction| {
         match button {
             RemoteButton::B => haptic_rumble(),
@@ -24,6 +93,8 @@ pub fn RemoteView(room_id: String) -> Element {
             ButtonAction::Release => "Solto",
         };
         last_action.set(format!("{:?} ({})", button, action_str));
+
+        send_ws_message(ClientMessage::Button { button, action });
     };
 
     // Sensor activation handler
@@ -34,17 +105,23 @@ pub fn RemoteView(room_id: String) -> Element {
                 match crate::sensors::orientation::wasm::request_sensor_permission().await {
                     Ok(granted) => {
                         if granted {
-                            status_message.set("Sensores ativados com sucesso!".to_string());
+                            status_message.set("Sensores ativos e calibrados!".to_string());
                             sensor_active.set(true);
 
+                            let sender_holder = ws_sender.read().clone();
                             let res = crate::sensors::orientation::wasm::start_orientation_listener(move |data| {
                                 raw_orientation.set(data);
                                 let cal = calibration.read().apply(data);
                                 calibrated_orientation.set(cal);
+
+                                // Send motion to server
+                                if let Some(ref sender) = *sender_holder.borrow() {
+                                    let _ = sender.unbounded_send(ClientMessage::Motion(cal));
+                                }
                             });
 
                             if let Ok(closure) = res {
-                                closure.forget(); // Keep listener alive in JS runtime
+                                closure.forget();
                             }
                         } else {
                             status_message.set("Permissão dos sensores foi negada.".to_string());
@@ -59,7 +136,7 @@ pub fn RemoteView(room_id: String) -> Element {
         #[cfg(not(target_arch = "wasm32"))]
         {
             sensor_active.set(true);
-            status_message.set("Modo Simulação (Ambiente Desktop/Server)".to_string());
+            status_message.set("Modo Simulação Desktop".to_string());
         }
     };
 
@@ -71,9 +148,11 @@ pub fn RemoteView(room_id: String) -> Element {
         let cal = calibration.read().apply(current_raw);
         calibrated_orientation.set(cal);
         last_action.set("Centro Calibrado!".to_string());
+        send_ws_message(ClientMessage::CalibrateCenter);
     };
 
     let cal = *calibrated_orientation.read();
+    let current_pid = *player_id.read();
 
     rsx! {
         div {
@@ -81,7 +160,14 @@ pub fn RemoteView(room_id: String) -> Element {
             header {
                 class: "wiimote-top-bar",
                 h2 { "Wii Remote" }
-                span { class: "badge-room", "Sala: {room_id}" }
+                div {
+                    class: "wiimote-top-tags",
+                    span {
+                        class: if *is_connected.read() { "badge-ws-online" } else { "badge-ws-offline" },
+                        if *is_connected.read() { "ONLINE" } else { "OFFLINE" }
+                    }
+                    span { class: "badge-room", "Sala: {room_id}" }
+                }
             }
 
             // Sensor status & Calibration bar
@@ -112,6 +198,11 @@ pub fn RemoteView(room_id: String) -> Element {
             // Wiimote Chassis
             div {
                 class: "wiimote-chassis",
+
+                // Player Slot Indicator Banner
+                if let Some(pid) = current_pid {
+                    div { class: "player-slot-badge", "🎮 JOGADOR {pid}" }
+                }
 
                 // D-Pad Section
                 div {
@@ -206,10 +297,11 @@ pub fn RemoteView(room_id: String) -> Element {
                 // LED Indicators (P1 - P4)
                 div {
                     class: "wiimote-led-row",
-                    div { class: "led-indicator led-active" }
-                    div { class: "led-indicator" }
-                    div { class: "led-indicator" }
-                    div { class: "led-indicator" }
+                    for i in 1..=4 {
+                        div {
+                            class: if current_pid == Some(i) { "led-indicator led-active" } else { "led-indicator" }
+                        }
+                    }
                 }
             }
 

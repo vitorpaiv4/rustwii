@@ -1,7 +1,9 @@
 pub mod app;
 pub mod components;
+pub mod net;
 pub mod route;
 pub mod sensors;
+pub mod server;
 pub mod types;
 pub mod views;
 

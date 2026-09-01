@@ -37,6 +37,32 @@ body {
     padding-bottom: 12px;
 }
 
+.screen-title-area {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.badge-ws-online {
+    background: #10b981;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
+.badge-ws-offline {
+    background: #94a3b8;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+}
+
 .room-badge {
     background: #00a8e8;
     color: #ffffff;
@@ -101,14 +127,64 @@ body {
 }
 
 .screen-footer {
-    display: flex;
-    justify-content: space-around;
-    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    padding: 12px;
     background: #ffffff;
-    border-radius: 14px;
-    font-size: 0.95rem;
-    color: #64748b;
+    border-radius: 16px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+
+.player-slot-status {
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+.slot-online {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #15803d;
+}
+
+.slot-offline {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+}
+
+.slot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.slot-orientation, .slot-button {
+    font-size: 0.75rem;
+    color: #334155;
+    font-weight: 500;
+}
+
+.player-slot-badge {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    font-weight: 900;
+    font-size: 1rem;
+    padding: 6px 16px;
+    border-radius: 20px;
+    box-shadow: 0 3px 8px rgba(2,132,199,0.3);
+    letter-spacing: 1px;
+}
+
+.wiimote-top-tags {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 /* ========================================================= */

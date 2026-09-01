@@ -1945,7 +1945,9 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "dioxus",
+ "futures-channel",
  "futures-util",
+ "gloo-net",
  "js-sys",
  "serde",
  "serde_json",
