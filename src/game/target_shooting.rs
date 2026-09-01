@@ -201,12 +201,12 @@ pub fn TargetShootingGame(
                             }
                             TargetKind::Gold => {
                                 points = 300;
-                                text = "+300 🌟".to_string();
+                                text = "+300".to_string();
                             }
                             TargetKind::Bomb => {
                                 points = -150;
                                 hit_color = "#ef4444";
-                                text = "-150 💥".to_string();
+                                text = "-150".to_string();
                             }
                         }
                         break;
@@ -274,7 +274,7 @@ pub fn TargetShootingGame(
 
                 div {
                     class: "game-timer-badge",
-                    span { "⏳ " }
+                    span { class: "timer-label", "TEMPO: " }
                     b { "{time_left}s" }
                 }
 
@@ -328,7 +328,7 @@ pub fn TargetShootingGame(
                     class: "wii-modal-backdrop",
                     div {
                         class: "game-over-card",
-                        h1 { "🏆 Fim de Jogo!" }
+                        h1 { "Fim de Jogo" }
                         p { "Resultados da Partida de Tiro ao Alvo:" }
 
                         div {
@@ -367,7 +367,7 @@ pub fn TargetShootingGame(
                                         PlayerScore::default(),
                                     ]);
                                 },
-                                "Jogar Novamente 🔄"
+                                "Jogar Novamente"
                             }
                         }
                     }

@@ -1,3 +1,4 @@
+#[cfg(target_arch = "wasm32")]
 use rustwii::App;
 
 fn main() {
@@ -12,8 +13,8 @@ fn main() {
             .unwrap()
             .block_on(async move {
                 use axum::routing::get;
-                use dioxus::fullstack::prelude::*;
                 use rustwii::server::{ws_handler, RoomManager};
+                use tower_http::services::{ServeDir, ServeFile};
 
                 let room_manager = RoomManager::new();
                 let address = std::net::SocketAddr::from(([0, 0, 0, 0], 8080));
@@ -27,24 +28,17 @@ fn main() {
                     .await
                     .expect("Falha ao abrir porta TCP");
 
-                let index_template = r#"<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-    <title>RustWii - Nintendo Wii Experience in Pure Rust</title>
-</head>
-<body>
-    <div id="main"></div>
-</body>
-</html>"#;
-
-                let cfg = ServeConfigBuilder::new().index_html(index_template.to_string());
+                let static_dir = "target/dx/rustwii/debug/web/public";
+                let index_file = format!("{}/index.html", static_dir);
 
                 let router = axum::Router::new()
                     .route("/ws/:room_id", get(ws_handler))
+                    .route("/api/server-info", get(rustwii::server::server_info_handler))
                     .with_state(room_manager)
-                    .serve_dioxus_application(cfg, App);
+                    .fallback_service(
+                        ServeDir::new(static_dir)
+                            .not_found_service(ServeFile::new(index_file))
+                    );
 
                 axum::serve(listener, router.into_make_service())
                     .await

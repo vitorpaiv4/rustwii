@@ -1,5 +1,6 @@
 use dioxus::prelude::*;
 use crate::audio::{play_back, play_click, play_hover, play_start_chime};
+use crate::components::icons::*;
 use crate::components::qrcode_view::QrCodeView;
 use crate::inertial::CursorState;
 
@@ -8,7 +9,6 @@ pub struct WiiChannelData {
     pub id: &'static str,
     pub title: &'static str,
     pub subtitle: &'static str,
-    pub icon: &'static str,
     pub is_playable: bool,
 }
 
@@ -17,51 +17,58 @@ pub const CHANNELS: [WiiChannelData; 12] = [
         id: "wii_play",
         title: "RustWii Play",
         subtitle: "Mini-games multiplayer com controle de movimento",
-        icon: "💿",
         is_playable: true,
     },
     WiiChannelData {
         id: "target_shoot",
         title: "Tiro ao Alvo",
         subtitle: "Treine sua mira disparando nos alvos em movimento",
-        icon: "🎯",
         is_playable: true,
     },
     WiiChannelData {
         id: "pairing_channel",
         title: "Parear Wiimote",
         subtitle: "Conecte seu smartphone via QR Code para usar como controle",
-        icon: "📱",
         is_playable: false,
     },
     WiiChannelData {
         id: "mii_channel",
         title: "Canal Mii",
         subtitle: "Crie e personalize avatares dos jogadores",
-        icon: "👤",
         is_playable: false,
     },
     WiiChannelData {
         id: "forecast",
         title: "Canal Tempo",
         subtitle: "Previsão do tempo global no globo 3D",
-        icon: "☀️",
         is_playable: false,
     },
     WiiChannelData {
         id: "news",
         title: "Canal Notícias",
         subtitle: "Principais manchetes e acontecimentos do mundo",
-        icon: "📰",
         is_playable: false,
     },
-    WiiChannelData { id: "empty_7", title: "Canal Vazio", subtitle: "Espaço disponível", icon: "📺", is_playable: false },
-    WiiChannelData { id: "empty_8", title: "Canal Vazio", subtitle: "Espaço disponível", icon: "📺", is_playable: false },
-    WiiChannelData { id: "empty_9", title: "Canal Vazio", subtitle: "Espaço disponível", icon: "📺", is_playable: false },
-    WiiChannelData { id: "empty_10", title: "Canal Vazio", subtitle: "Espaço disponível", icon: "📺", is_playable: false },
-    WiiChannelData { id: "empty_11", title: "Canal Vazio", subtitle: "Espaço disponível", icon: "📺", is_playable: false },
-    WiiChannelData { id: "empty_12", title: "Canal Vazio", subtitle: "Espaço disponível", icon: "📺", is_playable: false },
+    WiiChannelData { id: "empty_7", title: "Canal Vazio", subtitle: "Espaço disponível", is_playable: false },
+    WiiChannelData { id: "empty_8", title: "Canal Vazio", subtitle: "Espaço disponível", is_playable: false },
+    WiiChannelData { id: "empty_9", title: "Canal Vazio", subtitle: "Espaço disponível", is_playable: false },
+    WiiChannelData { id: "empty_10", title: "Canal Vazio", subtitle: "Espaço disponível", is_playable: false },
+    WiiChannelData { id: "empty_11", title: "Canal Vazio", subtitle: "Espaço disponível", is_playable: false },
+    WiiChannelData { id: "empty_12", title: "Canal Vazio", subtitle: "Espaço disponível", is_playable: false },
 ];
+
+#[component]
+fn ChannelIcon(id: &'static str) -> Element {
+    match id {
+        "wii_play" => rsx! { DiscIcon {} },
+        "target_shoot" => rsx! { TargetIcon {} },
+        "pairing_channel" => rsx! { RemoteIcon {} },
+        "mii_channel" => rsx! { MiiIcon {} },
+        "forecast" => rsx! { WeatherIcon {} },
+        "news" => rsx! { NewsIcon {} },
+        _ => rsx! { EmptyChannelIcon {} },
+    }
+}
 
 #[component]
 pub fn WiiMenu(
@@ -110,7 +117,7 @@ pub fn WiiMenu(
                         },
 
                         div { class: "channel-card-screen",
-                            span { class: "channel-card-icon", "{channel.icon}" }
+                            div { class: "channel-card-icon", ChannelIcon { id: channel.id } }
                             b { class: "channel-card-title", "{channel.title}" }
                             if channel.is_playable {
                                 span { class: "badge-playable", "JOGÁVEL" }
@@ -131,13 +138,15 @@ pub fn WiiMenu(
                         let curr = *show_pairing_modal.read();
                         show_pairing_modal.set(!curr);
                     },
-                    "📱 Parear Smartphone (QR Code)"
+                    QrIcon {}
+                    span { "Parear Smartphone" }
                 }
                 a {
                     class: "btn-wii-direct-link",
                     href: "{remote_url}",
                     target: "_blank",
-                    "🔗 Abrir Controle em Nova Aba"
+                    LinkIcon {}
+                    span { "Abrir Controle em Nova Aba" }
                 }
             }
 
@@ -149,14 +158,18 @@ pub fn WiiMenu(
                     div {
                         class: "wii-modal-card",
                         onclick: move |e| e.stop_propagation(),
-                        h2 { "🎮 Pareamento de Controles" }
-                        p { "Aponte a câmera do celular para conectar como Wii Remote:" }
+                        h2 { "Pareamento de Controles" }
+                        p { "Aponte a câmera do celular (na mesma rede Wi-Fi) para conectar:" }
                         QrCodeView { url: remote_url.clone() }
                         a {
                             class: "wii-pairing-url-link",
                             href: "{remote_url}",
                             target: "_blank",
-                            "{remote_url} ↗"
+                            "{remote_url}"
+                        }
+                        p {
+                            style: "font-size: 0.8rem; color: #64748b; margin-top: 6px;",
+                            "Certifique-se de que o celular e o computador estão na mesma rede Wi-Fi."
                         }
                         button {
                             class: "btn-wii-dialog-back",
@@ -177,12 +190,13 @@ pub fn WiiMenu(
                         onclick: move |e| e.stop_propagation(),
 
                         div { class: "banner-header",
-                            span { class: "banner-icon", "{ch.icon}" }
+                            div { class: "banner-icon", ChannelIcon { id: ch.id } }
                             h2 { "{ch.title}" }
                         }
                         p { class: "banner-subtitle", "{ch.subtitle}" }
 
-                        div { class: "banner-action-row",
+                        div {
+                            class: "banner-action-row",
                             button {
                                 class: "btn-wii-dialog-back",
                                 onclick: close_modal,
@@ -195,7 +209,7 @@ pub fn WiiMenu(
                                         let id = ch.id;
                                         move |_| start_game(id)
                                     },
-                                    "Começar ▶"
+                                    "Começar"
                                 }
                             }
                         }

@@ -178,7 +178,7 @@ pub fn RemoteView(room_id: String) -> Element {
                     button {
                         class: "btn-sensor-activate",
                         onclick: start_sensors,
-                        "📡 Ativar Sensores (Giroscópio)"
+                        "Ativar Sensores (Giroscópio)"
                     }
                 } else {
                     div {
@@ -190,7 +190,7 @@ pub fn RemoteView(room_id: String) -> Element {
                     button {
                         class: "btn-recenter",
                         onclick: recenter,
-                        "🎯 Recentralizar / Calibrar"
+                        "Recentralizar / Calibrar"
                     }
                 }
             }
@@ -201,7 +201,7 @@ pub fn RemoteView(room_id: String) -> Element {
 
                 // Player Slot Indicator Banner
                 if let Some(pid) = current_pid {
-                    div { class: "player-slot-badge", "🎮 JOGADOR {pid}" }
+                    div { class: "player-slot-badge", "JOGADOR {pid}" }
                 }
 
                 // D-Pad Section

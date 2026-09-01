@@ -146,3 +146,24 @@ async fn handle_socket(
         send_task.abort();
     }
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn get_local_ip() -> String {
+    if let Ok(socket) = std::net::UdpSocket::bind("0.0.0.0:0") {
+        if socket.connect("1.1.1.1:80").is_ok() {
+            if let Ok(addr) = socket.local_addr() {
+                return addr.ip().to_string();
+            }
+        }
+    }
+    "127.0.0.1".to_string()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub async fn server_info_handler() -> axum::Json<serde_json::Value> {
+    let local_ip = get_local_ip();
+    axum::Json(serde_json::json!({
+        "local_ip": local_ip,
+        "port": 8080
+    }))
+}

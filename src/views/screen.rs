@@ -48,7 +48,8 @@ pub fn ScreenView() -> Element {
     let mut current_view = use_signal(|| "menu");
 
     // Dynamic pairing URL computation
-    let remote_url = {
+    #[allow(unused_mut)]
+    let mut pairing_url = use_signal(|| {
         #[cfg(target_arch = "wasm32")]
         {
             if let Some(window) = web_sys::window() {
@@ -64,7 +65,28 @@ pub fn ScreenView() -> Element {
         {
             format!("http://localhost:8080/remote/{}", room_code.read())
         }
-    };
+    });
+
+    // Auto-discover local network IP from server if viewing on localhost
+    #[cfg(target_arch = "wasm32")]
+    {
+        let room_code_for_ip = room_code.read().clone();
+        use_effect(move || {
+            let rcode = room_code_for_ip.clone();
+            spawn(async move {
+                if let Ok(resp) = gloo_net::http::Request::get("/api/server-info").send().await {
+                    if let Ok(data) = resp.json::<serde_json::Value>().await {
+                        if let Some(ip) = data["local_ip"].as_str() {
+                            if ip != "127.0.0.1" && !ip.is_empty() {
+                                let port = data["port"].as_u64().unwrap_or(8080);
+                                pairing_url.set(format!("http://{}:{}/remote/{}", ip, port, rcode));
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    }
 
     // Connect as screen host over WebSocket
     #[allow(unused_variables)]
@@ -159,7 +181,7 @@ pub fn ScreenView() -> Element {
                 if *current_view.read() == "menu" {
                     WiiMenu {
                         room_code: room_code.read().clone(),
-                        remote_url: remote_url.clone(),
+                        remote_url: pairing_url.read().clone(),
                         cursors: cursors,
                         on_launch_game: move |game_id: &'static str| {
                             current_view.set(game_id);
@@ -189,7 +211,7 @@ pub fn ScreenView() -> Element {
                     }
                 }
 
-                div { class: "wii-circle-btn", "✉" }
+                div { class: "wii-circle-btn", crate::components::MailIcon {} }
             }
         }
     }
