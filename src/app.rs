@@ -6,13 +6,14 @@ const MAIN_CSS: &str = r#"
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
 }
 
 body {
-    background-color: #e6ecf0;
+    background-color: #e9ecef;
     color: #333333;
     overflow-x: hidden;
     min-height: 100vh;
@@ -25,242 +26,390 @@ body {
     height: 100vh;
     justify-content: space-between;
     padding: 24px;
-    background: radial-gradient(circle at center, #ffffff 0%, #dfe7ed 100%);
+    background: radial-gradient(circle at center, #ffffff 0%, #d8e2ec 100%);
 }
 
 .screen-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #00a8e8;
+    border-bottom: 3px solid #00a8e8;
     padding-bottom: 12px;
 }
 
 .room-badge {
     background: #00a8e8;
     color: #ffffff;
-    padding: 4px 10px;
+    padding: 6px 14px;
     border-radius: 12px;
     font-weight: bold;
+    letter-spacing: 1px;
 }
 
 .screen-content {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 24px;
 }
 
 .pairing-info {
     text-align: center;
     background: white;
-    padding: 16px 24px;
+    padding: 20px 32px;
     border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
 }
 
 .pairing-info code {
     display: inline-block;
-    margin-top: 8px;
-    font-size: 1.2rem;
+    margin-top: 10px;
+    font-size: 1.3rem;
     font-weight: bold;
     color: #0077b6;
-    background: #edf2f7;
-    padding: 6px 12px;
+    background: #f0f7fb;
+    padding: 8px 16px;
     border-radius: 8px;
 }
 
 .wii-grid-placeholder {
     display: grid;
-    grid-template-columns: repeat(2, 200px);
-    gap: 16px;
+    grid-template-columns: repeat(2, 220px);
+    gap: 20px;
 }
 
 .wii-channel-slot {
     background: #ffffff;
-    border: 2px solid #b0bec5;
-    border-radius: 16px;
-    height: 120px;
+    border: 3px solid #cfd8dc;
+    border-radius: 20px;
+    height: 130px;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 12px;
+    padding: 16px;
     font-weight: bold;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    font-size: 1.1rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .wii-channel-slot:hover {
     border-color: #00a8e8;
-    transform: scale(1.03);
+    transform: scale(1.04);
+    box-shadow: 0 8px 20px rgba(0,168,232,0.2);
 }
 
 .screen-footer {
     display: flex;
     justify-content: space-around;
-    padding: 12px;
+    padding: 14px;
     background: #ffffff;
-    border-radius: 12px;
-    font-size: 0.9rem;
+    border-radius: 14px;
+    font-size: 0.95rem;
     color: #64748b;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
 
-/* Remote View (Smartphone) Styles */
-.remote-container {
+/* ========================================================= */
+/* Mobile Remote (Wiimote) Styles                             */
+/* ========================================================= */
+.wiimote-page {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    max-width: 400px;
+    max-width: 420px;
     margin: 0 auto;
-    background: #f8fafc;
-    padding: 16px;
-    touch-action: manipulation;
+    background: #f1f5f9;
+    padding: 12px;
+    gap: 12px;
 }
 
-.remote-header {
-    text-align: center;
-    margin-bottom: 16px;
+.wiimote-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    padding: 10px 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.room-tag {
-    display: inline-block;
-    background: #e2e8f0;
-    color: #475569;
-    padding: 2px 8px;
-    border-radius: 6px;
+.badge-room {
+    background: #0284c7;
+    color: white;
+    font-weight: bold;
     font-size: 0.85rem;
-    margin-top: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
 }
 
-.remote-body {
+.sensor-card {
+    background: white;
+    border-radius: 16px;
+    padding: 12px 16px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     display: flex;
     flex-direction: column;
+    gap: 8px;
+}
+
+.status-text {
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.btn-sensor-activate {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(2,132,199,0.3);
+}
+
+.btn-sensor-activate:active {
+    transform: scale(0.98);
+}
+
+.telemetry-panel {
+    display: flex;
+    justify-content: space-around;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px;
+    font-size: 0.8rem;
+}
+
+.telemetry-item b {
+    color: #0284c7;
+    margin-left: 4px;
+}
+
+.btn-recenter {
+    background: #f8fafc;
+    border: 2px solid #0284c7;
+    color: #0284c7;
+    padding: 8px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.btn-recenter:active {
+    background: #0284c7;
+    color: white;
+}
+
+/* Wiimote Physical Chassis */
+.wiimote-chassis {
+    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+    border: 4px solid #cbd5e1;
+    border-radius: 36px;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* D-Pad */
+.wiimote-dpad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.dpad-middle-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.dpad-btn {
+    width: 52px;
+    height: 52px;
+    background: #334155;
+    color: #94a3b8;
+    border: none;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    touch-action: none;
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.15), 0 3px 6px rgba(0,0,0,0.3);
+}
+
+.dpad-up { border-radius: 10px 10px 0 0; }
+.dpad-down { border-radius: 0 0 10px 10px; }
+.dpad-left { border-radius: 10px 0 0 10px; }
+.dpad-right { border-radius: 0 10px 10px 0; }
+
+.dpad-core {
+    width: 52px;
+    height: 52px;
+    background: #334155;
+}
+
+.dpad-btn:active {
+    background: #0f172a;
+    color: #38bdf8;
+    box-shadow: inset 0 3px 6px rgba(0,0,0,0.6);
+}
+
+/* A & B Action Buttons */
+.wiimote-actions {
+    display: flex;
     align-items: center;
     gap: 20px;
 }
 
-.sensor-status {
-    width: 100%;
-    text-align: center;
-    background: #ffffff;
-    padding: 12px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+.btn-wii-a-tactile {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffffff 0%, #cbd5e1 70%, #94a3b8 100%);
+    border: 3px solid #94a3b8;
+    color: #334155;
+    font-size: 1.8rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.9);
+    touch-action: none;
 }
 
-.btn-primary {
-    margin-top: 8px;
-    background: #00a8e8;
+.btn-wii-a-tactile:active {
+    transform: scale(0.94);
+    background: #94a3b8;
+    color: #ffffff;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.4);
+}
+
+.btn-wii-b-tactile {
+    padding: 0 20px;
+    height: 60px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #64748b 0%, #475569 100%);
+    border: 2px solid #334155;
     color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
+    font-size: 1.1rem;
     font-weight: bold;
     cursor: pointer;
-    width: 100%;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+    touch-action: none;
 }
 
-.remote-dpad-section {
+.btn-wii-b-tactile:active {
+    transform: scale(0.94);
+    background: #1e293b;
+    box-shadow: inset 0 4px 8px rgba(0,0,0,0.5);
+}
+
+/* Middle Row (-, Home, +) */
+.wiimote-middle-row {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 18px;
 }
 
-.dpad-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+.btn-wii-symbol {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    color: #64748b;
+    font-size: 1.3rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    touch-action: none;
 }
 
-.dpad-btn, .dpad-center {
+.btn-wii-symbol:active {
+    background: #cbd5e1;
+    transform: scale(0.92);
+}
+
+.btn-wii-home-tactile {
     width: 48px;
     height: 48px;
-    background: #334155;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    font-size: 1.2rem;
-}
-
-.dpad-center {
-    background: #1e293b;
-}
-
-.remote-action-buttons {
-    display: flex;
-    gap: 16px;
-    width: 100%;
-    justify-content: center;
-}
-
-.btn-wii-a {
-    width: 70px;
-    height: 70px;
     border-radius: 50%;
-    background: #3b82f6;
+    background: #0284c7;
+    border: 2px solid #0369a1;
     color: white;
     font-size: 1.4rem;
-    font-weight: bold;
-    border: 3px solid #1d4ed8;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(2,132,199,0.3);
+    touch-action: none;
 }
 
-.btn-wii-b {
-    padding: 0 16px;
-    height: 70px;
-    border-radius: 16px;
-    background: #64748b;
-    color: white;
-    font-size: 1rem;
-    font-weight: bold;
-    border: none;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+.btn-wii-home-tactile:active {
+    background: #075985;
+    transform: scale(0.92);
 }
 
-.remote-meta-buttons {
+/* 1 and 2 Buttons */
+.wiimote-bottom-row {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    gap: 20px;
 }
 
-.btn-wii-small {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #e2e8f0;
-    border: 1px solid #cbd5e1;
-    font-size: 1.2rem;
-    font-weight: bold;
-}
-
-.btn-wii-home {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: #38bdf8;
-    color: white;
-    border: none;
-    font-size: 1.3rem;
-}
-
-.remote-numpad-buttons {
-    display: flex;
-    gap: 16px;
-}
-
-.btn-wii-num {
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    background: #e2e8f0;
+.btn-wii-num-tactile {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    background: #f8fafc;
     border: 2px solid #cbd5e1;
-    font-size: 1.2rem;
+    color: #475569;
+    font-size: 1.3rem;
     font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    touch-action: none;
+}
+
+.btn-wii-num-tactile:active {
+    background: #cbd5e1;
+    transform: scale(0.92);
+}
+
+/* LEDs */
+.wiimote-led-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.led-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #94a3b8;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.led-active {
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8, inset 0 1px 2px rgba(255,255,255,0.8);
+}
+
+.wiimote-footer-status {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
 }
 "#;
 
