@@ -19,122 +19,330 @@ body {
     min-height: 100vh;
 }
 
-/* Screen View (PC/TV) Styles */
+/* ========================================================= */
+/* Wii System Screen View Styles                             */
+/* ========================================================= */
 .screen-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
     justify-content: space-between;
-    padding: 24px;
-    background: radial-gradient(circle at center, #ffffff 0%, #d8e2ec 100%);
+    padding: 16px 24px;
+    background: radial-gradient(circle at 50% 40%, #ffffff 0%, #d5e1eb 80%, #b8cad8 100%);
+    overflow: hidden;
+    position: relative;
 }
 
-.screen-header {
+.wii-system-top-bar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 3px solid #00a8e8;
-    padding-bottom: 12px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    border-bottom: 2px solid #cbd5e1;
 }
 
-.screen-title-area {
+.wii-brand-area {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 }
 
-.badge-ws-online {
-    background: #10b981;
+.wii-logo-icon {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #475569;
+    letter-spacing: -1px;
+}
+
+.wii-system-clock {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.wii-room-tag {
+    background: #0284c7;
     color: white;
-    font-size: 0.75rem;
-    font-weight: bold;
-    padding: 3px 8px;
-    border-radius: 6px;
-    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
 }
 
-.badge-ws-offline {
-    background: #94a3b8;
-    color: white;
-    font-size: 0.75rem;
-    font-weight: bold;
-    padding: 3px 8px;
-    border-radius: 6px;
-    letter-spacing: 0.5px;
+.wii-main-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 0;
 }
 
-.room-badge {
-    background: #00a8e8;
-    color: #ffffff;
-    padding: 6px 14px;
-    border-radius: 12px;
-    font-weight: bold;
-    letter-spacing: 1px;
-}
-
-.screen-content {
+.wii-menu-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
+    width: 100%;
+    max-width: 1100px;
+    gap: 12px;
 }
 
-.pairing-info {
-    text-align: center;
-    background: white;
-    padding: 20px 32px;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-}
-
-.pairing-info code {
-    display: inline-block;
-    margin-top: 10px;
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #0077b6;
-    background: #f0f7fb;
-    padding: 8px 16px;
-    border-radius: 8px;
-}
-
-.wii-grid-placeholder {
+/* 4 Columns x 3 Rows Channels Grid */
+.wii-channels-grid-4x3 {
     display: grid;
-    grid-template-columns: repeat(2, 220px);
-    gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(3, 115px);
+    gap: 14px;
+    width: 100%;
 }
 
-.wii-channel-slot {
-    background: #ffffff;
-    border: 3px solid #cfd8dc;
-    border-radius: 20px;
-    height: 130px;
+.wii-channel-card {
+    position: relative;
+    background: linear-gradient(180deg, #ffffff 0%, #e2e8f0 100%);
+    border: 3px solid #b0bec5;
+    border-radius: 18px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wii-channel-card:hover {
+    transform: scale(1.04);
+    border-color: #00a8e8;
+    box-shadow: 0 8px 24px rgba(0, 168, 232, 0.35), inset 0 2px 4px rgba(255, 255, 255, 1);
+}
+
+.channel-playable {
+    border-color: #7dd3fc;
+}
+
+.channel-card-screen {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 4px;
+    z-index: 2;
     text-align: center;
-    padding: 16px;
-    font-weight: bold;
-    font-size: 1rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
+    padding: 8px;
 }
 
-.channel-icon {
+.channel-card-icon {
     font-size: 1.8rem;
 }
 
-.wii-channel-slot:hover, .wii-channel-slot.channel-active {
-    border-color: #00a8e8;
-    transform: scale(1.05);
-    box-shadow: 0 8px 24px rgba(0,168,232,0.25);
+.channel-card-title {
+    font-size: 0.85rem;
+    color: #1e293b;
+    font-weight: 700;
 }
 
-.channel-active {
-    background: #f0f9ff;
+.badge-playable {
+    background: #0284c7;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+}
+
+.channel-card-gloss {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 100%);
+    pointer-events: none;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.wii-pairing-float-bar {
+    margin-top: 4px;
+}
+
+.btn-wii-pair {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    font-weight: bold;
+    font-size: 0.95rem;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    transition: transform 0.15s ease;
+}
+
+.btn-wii-pair:hover {
+    transform: scale(1.03);
+}
+
+/* Wii System Bottom Bar */
+.wii-system-bottom-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    border-radius: 18px;
+    border-top: 2px solid #cbd5e1;
+}
+
+.wii-circle-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%);
+    border: 2px solid #94a3b8;
+    color: #475569;
+    font-weight: 900;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.wii-players-status-row {
+    display: flex;
+    gap: 12px;
+}
+
+.player-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border: 2px solid;
+}
+
+.pill-online {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #16a34a;
+}
+
+.pill-offline {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    color: #94a3b8;
+}
+
+/* Modals */
+.wii-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.wii-modal-card, .wii-channel-banner-card {
+    background: white;
+    padding: 24px 32px;
+    border-radius: 24px;
+    text-align: center;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.wii-qrcode-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.wii-qrcode-svg svg {
+    border-radius: 12px;
+    border: 3px solid #e2e8f0;
+    padding: 8px;
+}
+
+.wii-qrcode-label {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.banner-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.banner-icon {
+    font-size: 2.2rem;
+}
+
+.banner-subtitle {
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+.banner-action-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+    margin-top: 8px;
+}
+
+.btn-wii-dialog-back {
+    flex: 1;
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    color: #475569;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.btn-wii-dialog-start {
+    flex: 1;
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+.wii-minigame-placeholder {
+    background: white;
+    padding: 40px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
 }
 
 /* ========================================================= */

@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use crate::components::WiiCursor;
+use crate::components::{WiiCursor, WiiMenu};
 use crate::inertial::CursorState;
 #[cfg(target_arch = "wasm32")]
 use crate::net::build_ws_url;
@@ -45,7 +45,26 @@ pub fn ScreenView() -> Element {
         CursorState::new(4),
     ]);
 
-    let mut active_channel = use_signal(|| Option::<&'static str>::None);
+    let mut current_view = use_signal(|| "menu");
+
+    // Dynamic pairing URL computation
+    let remote_url = {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(window) = web_sys::window() {
+                let location = window.location();
+                let host = location.host().unwrap_or_else(|_| "localhost:8080".to_string());
+                let protocol = location.protocol().unwrap_or_else(|_| "http:".to_string());
+                format!("{}//{}/remote/{}", protocol, host, room_code.read())
+            } else {
+                format!("http://localhost:8080/remote/{}", room_code.read())
+            }
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            format!("http://localhost:8080/remote/{}", room_code.read())
+        }
+    };
 
     // Connect as screen host over WebSocket
     #[allow(unused_variables)]
@@ -105,78 +124,78 @@ pub fn ScreenView() -> Element {
         div {
             class: "screen-container",
 
-            // Render Multiplayer Wii Cursors
+            // Render Multiplayer Wii Cursors Overlay
             for cursor in current_cursors.iter() {
                 WiiCursor { cursor: cursor.clone() }
             }
 
+            // Wii Top System Bar
             header {
-                class: "screen-header",
+                class: "wii-system-top-bar",
                 div {
-                    class: "screen-title-area",
-                    h1 { "🎮 RustWii - Console Screen" }
+                    class: "wii-brand-area",
+                    span { class: "wii-logo-icon", "Wii" }
                     span {
                         class: if *is_connected.read() { "badge-ws-online" } else { "badge-ws-offline" },
-                        if *is_connected.read() { "SERVER CONECTADO" } else { "LOCAL OFFLINE" }
+                        if *is_connected.read() { "CONECTADO" } else { "OFFLINE" }
                     }
                 }
-                p { "Sala atual: " span { class: "room-badge", "{room_code}" } }
+
+                div {
+                    class: "wii-system-clock",
+                    span { class: "clock-date", "Menu Principal" }
+                }
+
+                div {
+                    class: "wii-room-tag",
+                    span { "Sala: " }
+                    b { "{room_code}" }
+                }
             }
 
+            // Wii Main Content
             main {
-                class: "screen-content",
-                div {
-                    class: "pairing-info",
-                    p { "Abra no navegador do celular (mesma rede/túnel):" }
-                    code { "/remote/{room_code}" }
-                }
-
-                div {
-                    class: "wii-grid-placeholder",
-                    div {
-                        class: if *active_channel.read() == Some("wii_play") { "wii-channel-slot channel-active" } else { "wii-channel-slot" },
-                        onclick: move |_| active_channel.set(Some("wii_play")),
-                        div { class: "channel-icon", "🎯" }
-                        span { "Canal 1: RustWii Play" }
+                class: "wii-main-area",
+                if *current_view.read() == "menu" {
+                    WiiMenu {
+                        room_code: room_code.read().clone(),
+                        remote_url: remote_url.clone(),
+                        cursors: cursors,
+                        on_launch_game: move |game_id: &'static str| {
+                            current_view.set(game_id);
+                        }
                     }
+                } else {
                     div {
-                        class: if *active_channel.read() == Some("mii") { "wii-channel-slot channel-active" } else { "wii-channel-slot" },
-                        onclick: move |_| active_channel.set(Some("mii")),
-                        div { class: "channel-icon", "👤" }
-                        span { "Canal 2: Mii Studio" }
-                    }
-                    div {
-                        class: if *active_channel.read() == Some("target") { "wii-channel-slot channel-active" } else { "wii-channel-slot" },
-                        onclick: move |_| active_channel.set(Some("target")),
-                        div { class: "channel-icon", "🏹" }
-                        span { "Canal 3: Tiro ao Alvo" }
-                    }
-                    div {
-                        class: if *active_channel.read() == Some("settings") { "wii-channel-slot channel-active" } else { "wii-channel-slot" },
-                        onclick: move |_| active_channel.set(Some("settings")),
-                        div { class: "channel-icon", "⚙️" }
-                        span { "Canal 4: Configurações" }
-                    }
-                }
-            }
-
-            footer {
-                class: "screen-footer",
-                for (idx, p) in player_slots.iter().enumerate() {
-                    div {
-                        class: if p.connected { "player-slot-status slot-online" } else { "player-slot-status slot-offline" },
-                        div { class: "slot-header", b { "P{idx + 1}" } span { if p.connected { "Online" } else { "Desconectado" } } }
-                        if p.connected {
-                            div {
-                                class: "slot-orientation",
-                                "Yaw: {p.orientation.alpha:.0}° | Pitch: {p.orientation.beta:.0}° | Roll: {p.orientation.gamma:.0}°"
-                            }
-                            if let Some((btn, act)) = p.last_button {
-                                div { class: "slot-button", "Botão: {btn:?} ({act:?})" }
-                            }
+                        class: "wii-minigame-placeholder",
+                        h2 { "🎮 Carregando Mini-game: {current_view}" }
+                        p { "Mini-game será renderizado no Canvas (Fase 6)" }
+                        button {
+                            class: "btn-wii-dialog-back",
+                            onclick: move |_| current_view.set("menu"),
+                            "◀ Retornar ao Menu Wii"
                         }
                     }
                 }
+            }
+
+            // Wii Bottom System Bar
+            footer {
+                class: "wii-system-bottom-bar",
+                div { class: "wii-circle-btn", "Wii" }
+
+                div {
+                    class: "wii-players-status-row",
+                    for (idx, p) in player_slots.iter().enumerate() {
+                        div {
+                            class: if p.connected { "player-pill pill-online" } else { "player-pill pill-offline" },
+                            span { class: "pill-id", "P{idx + 1}" }
+                            span { class: "pill-state", if p.connected { "Conectado" } else { "-" } }
+                        }
+                    }
+                }
+
+                div { class: "wii-circle-btn", "✉" }
             }
         }
     }
