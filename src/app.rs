@@ -333,6 +333,189 @@ body {
     box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
 }
 
+/* ========================================================= */
+/* Mini-game Arena (Tiro ao Alvo / Target Shooting)           */
+/* ========================================================= */
+.wii-minigame-arena {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: radial-gradient(circle at 50% 50%, #f0fdf4 0%, #dcfce7 60%, #bbf7d0 100%);
+    border-radius: 20px;
+    border: 4px solid #86efac;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: inset 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.game-top-hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 3px solid #86efac;
+    z-index: 10;
+}
+
+.btn-game-exit {
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    color: #475569;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+.btn-game-exit:hover {
+    background: #e2e8f0;
+}
+
+.game-timer-badge {
+    background: #0284c7;
+    color: white;
+    font-size: 1.2rem;
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-weight: 900;
+    box-shadow: 0 4px 10px rgba(2, 132, 199, 0.3);
+}
+
+.game-scores-row {
+    display: flex;
+    gap: 12px;
+}
+
+.hud-score-pill {
+    background: white;
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.game-field {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Targets */
+.game-target {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: crosshair;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+    transition: transform 0.05s linear;
+}
+
+.target-standard {
+    background: radial-gradient(circle, #ef4444 0%, #ef4444 30%, #ffffff 30%, #ffffff 60%, #ef4444 60%, #ef4444 100%);
+    border: 3px solid #b91c1c;
+    animation: target-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.target-gold {
+    background: radial-gradient(circle, #fbbf24 0%, #f59e0b 60%, #d97706 100%);
+    border: 3px solid #78350f;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.8), 0 6px 16px rgba(0,0,0,0.25);
+    animation: target-spin 4s linear infinite;
+}
+
+.target-bomb {
+    background: radial-gradient(circle, #1e293b 0%, #0f172a 80%, #000000 100%);
+    border: 3px solid #ef4444;
+}
+
+.target-inner {
+    width: 30%;
+    height: 30%;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.4);
+}
+
+@keyframes target-pulse {
+    from { transform: translate(-50%, -50%) scale(1.0); }
+    to { transform: translate(-50%, -50%) scale(1.08); }
+}
+
+@keyframes target-spin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+.floating-score-popup {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    font-size: 1.6rem;
+    font-weight: 900;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    pointer-events: none;
+    z-index: 50;
+    animation: float-up 0.6s ease-out;
+}
+
+@keyframes float-up {
+    from { transform: translate(-50%, 0%) scale(0.8); }
+    to { transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* Podium & Game Over */
+.game-over-card {
+    background: white;
+    padding: 32px 40px;
+    border-radius: 28px;
+    text-align: center;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.podium-scores-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+    margin: 12px 0;
+}
+
+.podium-item {
+    background: #f8fafc;
+    border: 3px solid;
+    border-radius: 16px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.podium-score {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: #1e293b;
+}
+
+.podium-acc {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
 .wii-minigame-placeholder {
     background: white;
     padding: 40px;

@@ -4,17 +4,18 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-dioxus = { version = "0.6", features = ["router", "fullstack"] }
+dioxus = { version = "0.6", features = ["router"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-futures-util = "0.3"
+futures-util = { version = "0.3", features = ["sink"] }
 futures-channel = "0.3"
 qrcode = { version = "0.14", default-features = false, features = ["svg"] }
 
 # Client-side (WASM) dependencies
 [target.'cfg(target_arch = "wasm32")'.dependencies]
+dioxus = { version = "0.6", features = ["web"] }
 web-sys = { version = "0.3", features = [
     "Window",
     "Document",
@@ -39,15 +40,13 @@ wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
 js-sys = "0.3"
 gloo-net = { version = "0.6", features = ["websocket"] }
+gloo-timers = { version = "0.3", features = ["futures"] }
 
 # Server-side dependencies
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+dioxus = { version = "0.6", features = ["fullstack", "server"] }
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.7", features = ["ws"] }
 tower-http = { version = "0.6", features = ["cors", "fs"] }
 
-[features]
-default = []
-web = ["dioxus/web"]
-server = ["dioxus/server"]
 

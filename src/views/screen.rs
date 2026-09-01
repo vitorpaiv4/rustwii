@@ -166,15 +166,9 @@ pub fn ScreenView() -> Element {
                         }
                     }
                 } else {
-                    div {
-                        class: "wii-minigame-placeholder",
-                        h2 { "🎮 Carregando Mini-game: {current_view}" }
-                        p { "Mini-game será renderizado no Canvas (Fase 6)" }
-                        button {
-                            class: "btn-wii-dialog-back",
-                            onclick: move |_| current_view.set("menu"),
-                            "◀ Retornar ao Menu Wii"
-                        }
+                    crate::game::TargetShootingGame {
+                        cursors: cursors,
+                        on_exit: move |_| current_view.set("menu"),
                     }
                 }
             }
