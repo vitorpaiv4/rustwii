@@ -1,6 +1,6 @@
 [application]
 name = "rustwii"
-default_platform = "web"
+default_platform = "fullstack"
 out_dir = "dist"
 asset_dir = "assets"
 
