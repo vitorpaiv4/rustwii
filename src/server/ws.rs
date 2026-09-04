@@ -74,12 +74,14 @@ async fn handle_socket(
         // Spawn task to forward server feedback back to remote
         let send_task = tokio::spawn(async move {
             while let Ok(msg) = rx.recv().await {
-                if let ServerMessage::Pong = msg {
-                    if let Ok(json) = serde_json::to_string(&msg) {
-                        if ws_sender.send(Message::Text(json)).await.is_err() {
-                            break;
-                        }
+                match msg {
+                    ServerMessage::Pong | ServerMessage::Feedback { .. } => {
+                        if let Ok(json) = serde_json::to_string(&msg)
+                            && ws_sender.send(Message::Text(json)).await.is_err() {
+                                break;
+                            }
                     }
+                    _ => {}
                 }
             }
         });
@@ -90,6 +92,12 @@ async fn handle_socket(
                 Message::Text(text) => {
                     if let Ok(client_msg) = serde_json::from_str::<ClientMessage>(&text) {
                         match client_msg {
+                            ClientMessage::Sample(sample) => {
+                                let _ = tx.send(ServerMessage::PlayerSample {
+                                    player_id,
+                                    sample,
+                                });
+                            }
                             ClientMessage::Motion(orientation) => {
                                 let _ = tx.send(ServerMessage::PlayerMotion {
                                     player_id,
@@ -129,11 +137,10 @@ async fn handle_socket(
 
         let send_task = tokio::spawn(async move {
             while let Ok(msg) = rx.recv().await {
-                if let Ok(json) = serde_json::to_string(&msg) {
-                    if ws_sender.send(Message::Text(json)).await.is_err() {
+                if let Ok(json) = serde_json::to_string(&msg)
+                    && ws_sender.send(Message::Text(json)).await.is_err() {
                         break;
                     }
-                }
             }
         });
 
@@ -149,21 +156,26 @@ async fn handle_socket(
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_local_ip() -> String {
-    if let Ok(socket) = std::net::UdpSocket::bind("0.0.0.0:0") {
-        if socket.connect("1.1.1.1:80").is_ok() {
-            if let Ok(addr) = socket.local_addr() {
+    if let Ok(socket) = std::net::UdpSocket::bind("0.0.0.0:0")
+        && socket.connect("1.1.1.1:80").is_ok()
+            && let Ok(addr) = socket.local_addr() {
                 return addr.ip().to_string();
             }
-        }
-    }
     "127.0.0.1".to_string()
 }
 
 #[cfg(not(target_arch = "wasm32"))]
 pub async fn server_info_handler() -> axum::Json<serde_json::Value> {
     let local_ip = get_local_ip();
+    let public_url = std::env::var("PUBLIC_URL")
+        .or_else(|_| std::env::var("HOST_URL"))
+        .ok();
+
     axum::Json(serde_json::json!({
         "local_ip": local_ip,
-        "port": 8080
+        "http_port": 8080,
+        "https_port": 8443,
+        "https_available": true,
+        "public_url": public_url,
     }))
 }

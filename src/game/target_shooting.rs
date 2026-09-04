@@ -269,7 +269,7 @@ pub fn TargetShootingGame(
                         play_back();
                         on_exit.call(());
                     },
-                    "◀ Menu Wii"
+                    "◀ Menu RustWii"
                 }
 
                 div {
@@ -352,7 +352,7 @@ pub fn TargetShootingGame(
                                     play_back();
                                     on_exit.call(());
                                 },
-                                "Voltar ao Menu Wii"
+                                "Voltar ao Menu RustWii"
                             }
                             button {
                                 class: "btn-wii-dialog-start",

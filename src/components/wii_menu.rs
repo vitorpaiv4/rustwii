@@ -27,7 +27,7 @@ pub const CHANNELS: [WiiChannelData; 12] = [
     },
     WiiChannelData {
         id: "pairing_channel",
-        title: "Parear Wiimote",
+        title: "Parear RustWii Remote",
         subtitle: "Conecte seu smartphone via QR Code para usar como controle",
         is_playable: false,
     },
@@ -70,15 +70,41 @@ fn ChannelIcon(id: &'static str) -> Element {
     }
 }
 
+#[cfg(target_arch = "wasm32")]
+pub fn copy_to_clipboard(text: &str) {
+    if let Some(window) = web_sys::window() {
+        let nav = window.navigator();
+        let clipboard = nav.clipboard();
+        let _ = clipboard.write_text(text);
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn copy_to_clipboard(_text: &str) {}
+
 #[component]
 pub fn WiiMenu(
     room_code: String,
     remote_url: String,
+    local_ip: String,
+    public_url: Option<String>,
     cursors: Signal<[CursorState; 4]>,
     on_launch_game: EventHandler<&'static str>,
+    on_update_url: EventHandler<String>,
 ) -> Element {
     let mut selected_channel = use_signal(|| Option::<WiiChannelData>::None);
     let mut show_pairing_modal = use_signal(|| false);
+    let mut connection_mode = use_signal(|| {
+        if public_url.is_some() {
+            "internet".to_string()
+        } else {
+            "wifi".to_string()
+        }
+    });
+    let mut custom_tunnel_input = use_signal(|| {
+        public_url.clone().unwrap_or_default()
+    });
+    let mut is_copied = use_signal(|| false);
 
     let mut select_channel = move |channel: WiiChannelData| {
         play_click();
@@ -98,6 +124,52 @@ pub fn WiiMenu(
         play_start_chime();
         selected_channel.set(None);
         on_launch_game.call(channel_id);
+    };
+
+    // Calculate dynamic pairing URL according to active connection mode
+    let current_mode = connection_mode.read().clone();
+    let computed_url = match current_mode.as_str() {
+        "internet" => {
+            let val = custom_tunnel_input.read().trim().to_string();
+            if !val.is_empty() {
+                let base = val.trim_end_matches('/');
+                if base.starts_with("http://") || base.starts_with("https://") {
+                    format!("{}/remote/{}", base, room_code)
+                } else {
+                    format!("https://{}/remote/{}", base, room_code)
+                }
+            } else if let Some(ref pub_u) = public_url {
+                format!("{}/remote/{}", pub_u.trim_end_matches('/'), room_code)
+            } else {
+                remote_url.clone()
+            }
+        }
+        "localhost" => {
+            format!("http://localhost:8080/remote/{}", room_code)
+        }
+        _ => {
+            // Wi-Fi Local HTTPS (Native Port 8443)
+            let ip = if local_ip.is_empty() || local_ip == "127.0.0.1" {
+                "localhost".to_string()
+            } else {
+                local_ip.clone()
+            };
+            format!("https://{}:8443/remote/{}", ip, room_code)
+        }
+    };
+
+    let copy_url_action = {
+        let url_to_copy = computed_url.clone();
+        move |_| {
+            play_click();
+            copy_to_clipboard(&url_to_copy);
+            is_copied.set(true);
+            spawn(async move {
+                #[cfg(target_arch = "wasm32")]
+                gloo_timers::future::TimeoutFuture::new(2000).await;
+                is_copied.set(false);
+            });
+        }
     };
 
     rsx! {
@@ -139,40 +211,117 @@ pub fn WiiMenu(
                         show_pairing_modal.set(!curr);
                     },
                     QrIcon {}
-                    span { "Parear Smartphone" }
+                    span { "Parear RustWii Remote" }
                 }
                 a {
                     class: "btn-wii-direct-link",
-                    href: "{remote_url}",
+                    href: "{computed_url}",
                     target: "_blank",
                     LinkIcon {}
                     span { "Abrir Controle em Nova Aba" }
                 }
             }
 
-            // QR Code Modal
+            // Advanced QR Code & Network Modal
             if *show_pairing_modal.read() {
                 div {
                     class: "wii-modal-backdrop",
                     onclick: move |_| show_pairing_modal.set(false),
                     div {
-                        class: "wii-modal-card",
+                        class: "wii-modal-card wii-modal-pairing",
                         onclick: move |e| e.stop_propagation(),
-                        h2 { "Pareamento de Controles" }
-                        p { "Aponte a câmera do celular (na mesma rede Wi-Fi) para conectar:" }
-                        QrCodeView { url: remote_url.clone() }
-                        a {
-                            class: "wii-pairing-url-link",
-                            href: "{remote_url}",
-                            target: "_blank",
-                            "{remote_url}"
+
+                        h2 { "🎮 Pareamento de Controles RustWii" }
+
+                        // Mode Selector Tabs
+                        div {
+                            class: "wii-mode-tabs",
+                            button {
+                                class: if *connection_mode.read() == "wifi" { "wii-tab-btn tab-active" } else { "wii-tab-btn" },
+                                onclick: move |_| connection_mode.set("wifi".to_string()),
+                                WifiIcon {}
+                                span { "Wi-Fi Local (HTTPS 8443)" }
+                            }
+                            button {
+                                class: if *connection_mode.read() == "internet" { "wii-tab-btn tab-active" } else { "wii-tab-btn" },
+                                onclick: move |_| connection_mode.set("internet".to_string()),
+                                GlobeIcon {}
+                                span { "Internet (Túnel Público)" }
+                            }
+                            button {
+                                class: if *connection_mode.read() == "localhost" { "wii-tab-btn tab-active" } else { "wii-tab-btn" },
+                                onclick: move |_| connection_mode.set("localhost".to_string()),
+                                span { "💻 Localhost" }
+                            }
                         }
-                        p {
-                            style: "font-size: 0.8rem; color: #64748b; margin-top: 6px;",
-                            "Certifique-se de que o celular e o computador estão na mesma rede Wi-Fi."
+
+                        // Contextual Info Banner
+                        if *connection_mode.read() == "wifi" {
+                            div {
+                                class: "wii-mode-help",
+                                p { "📱 Conecte no mesmo Wi-Fi. " b { "No 1º acesso, aceite o aviso de certificado HTTPS" } " no celular para liberar o giroscópio!" }
+                            }
+                        } else if *connection_mode.read() == "internet" {
+                            div {
+                                class: "wii-mode-help help-internet",
+                                p { "🌐 " b { "Jogar de qualquer lugar (4G/5G/Internet) & Suporte a iPhone:" } }
+                                p { class: "help-small", "Acesse via HTTPS (túnel público) para liberar o giroscópio no Safari/iOS e permitir amigos jogarem à distância!" }
+                                
+                                div {
+                                    class: "wii-tunnel-input-row",
+                                    input {
+                                        class: "wii-input-url",
+                                        r#type: "text",
+                                        placeholder: "https://meu-tunel.trycloudflare.com",
+                                        value: "{custom_tunnel_input}",
+                                        oninput: move |evt| {
+                                            custom_tunnel_input.set(evt.value());
+                                        }
+                                    }
+                                }
+                                div {
+                                    class: "wii-tunnel-tip-box",
+                                    span { class: "tip-title", "💡 Como gerar um link público grátis em 5 segundos:" }
+                                    code { "cloudflared tunnel --url http://localhost:8080" }
+                                    span { class: "tip-or", "ou" }
+                                    code { "npx localtunnel --port 8080" }
+                                }
+                            }
+                        } else {
+                            div {
+                                class: "wii-mode-help help-warn",
+                                p { "⚠️ " b { "Aviso:" } " O endereço " code { "localhost" } " só funciona no próprio computador (abra em nova aba)." }
+                            }
                         }
+
+                        // QR Code View
+                        QrCodeView { url: computed_url.clone() }
+
+                        // Direct URL & Copy Action Bar
+                        div {
+                            class: "wii-url-action-bar",
+                            a {
+                                class: "wii-pairing-url-link",
+                                href: "{computed_url}",
+                                target: "_blank",
+                                "{computed_url}"
+                            }
+                            button {
+                                class: if *is_copied.read() { "btn-wii-copy btn-copied" } else { "btn-wii-copy" },
+                                onclick: copy_url_action,
+                                if *is_copied.read() {
+                                    CheckIcon {}
+                                    span { "Copiado!" }
+                                } else {
+                                    CopyIcon {}
+                                    span { "Copiar" }
+                                }
+                            }
+                        }
+
                         button {
                             class: "btn-wii-dialog-back",
+                            style: "margin-top: 8px; width: 100%;",
                             onclick: move |_| show_pairing_modal.set(false),
                             "Fechar"
                         }

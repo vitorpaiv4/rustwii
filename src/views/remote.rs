@@ -1,10 +1,12 @@
 use dioxus::prelude::*;
 #[cfg(target_arch = "wasm32")]
+use crate::audio::{play_click, unlock_audio};
+#[cfg(target_arch = "wasm32")]
 use crate::net::build_ws_url;
-use crate::sensors::{haptic_medium, haptic_rumble, haptic_tap, CalibrationOffset};
+use crate::sensors::{haptic_medium, haptic_rumble, haptic_tap};
 #[cfg(target_arch = "wasm32")]
 use crate::types::ServerMessage;
-use crate::types::{ButtonAction, ClientMessage, OrientationData, RemoteButton};
+use crate::types::{ButtonAction, ClientMessage, MotionData, OrientationSample, RemoteButton};
 
 #[cfg(target_arch = "wasm32")]
 use futures_channel::mpsc;
@@ -20,11 +22,7 @@ pub fn RemoteView(room_id: String) -> Element {
     let mut is_connected = use_signal(|| false);
     #[allow(unused_mut)]
     let mut player_id = use_signal(|| Option::<usize>::None);
-    let mut status_message = use_signal(|| "Toque para ativar os sensores de movimento".to_string());
-    #[allow(unused_mut)]
-    let mut raw_orientation = use_signal(|| OrientationData { alpha: 0.0, beta: 0.0, gamma: 0.0 });
-    let mut calibrated_orientation = use_signal(|| OrientationData { alpha: 0.0, beta: 0.0, gamma: 0.0 });
-    let mut calibration = use_signal(CalibrationOffset::default);
+    let mut status_message = use_signal(|| "Toque em Ativar para conectar o RustWii Remote".to_string());
     let mut last_action = use_signal(|| "-".to_string());
 
     #[cfg(target_arch = "wasm32")]
@@ -46,6 +44,15 @@ pub fn RemoteView(room_id: String) -> Element {
                         player_id.set(Some(pid));
                         status_message.set(format!("Conectado como Jogador P{}!", pid));
                         haptic_medium();
+                    }
+                    ServerMessage::Feedback { kind, combo: _ } => {
+                        if kind == "slice" {
+                            crate::sensors::haptic_rumble();
+                            crate::audio::play_swoosh();
+                        } else if kind == "bomb" {
+                            crate::sensors::haptic_rumble();
+                            crate::audio::play_thud();
+                        }
                     }
                     ServerMessage::Error { message } => {
                         status_message.set(format!("Erro: {}", message));
@@ -81,18 +88,56 @@ pub fn RemoteView(room_id: String) -> Element {
         }
     };
 
+    let mut sensitivity = use_signal(|| 1.0f64);
+    let mut last_touch_pos = use_signal(|| Option::<(f64, f64)>::None);
+    let mut virtual_angles = use_signal(|| (0.0f64, 0.0f64)); // (yaw, pitch)
+
+    // Calibration handler
+    let mut recenter_action = move || {
+        haptic_medium();
+        virtual_angles.set((0.0, 0.0));
+        last_action.set("Centro Calibrado!".to_string());
+        send_ws_message(ClientMessage::CalibrateCenter);
+    };
+
     // Helper for button feedback and dispatch
     let mut handle_button = move |button: RemoteButton, action: ButtonAction| {
-        match button {
-            RemoteButton::B => haptic_rumble(),
-            RemoteButton::Home => haptic_medium(),
-            _ => haptic_tap(),
+        if action == ButtonAction::Press {
+            match button {
+                RemoteButton::Minus => {
+                    let s = (*sensitivity.read() - 0.2).max(0.4);
+                    sensitivity.set(s);
+                    last_action.set(format!("Velocidade Mira: {:.1}x", s));
+                    haptic_tap();
+                    send_ws_message(ClientMessage::Speed { factor: s });
+                }
+                RemoteButton::Plus => {
+                    let s = (*sensitivity.read() + 0.2).min(2.5);
+                    sensitivity.set(s);
+                    last_action.set(format!("Velocidade Mira: {:.1}x", s));
+                    haptic_tap();
+                    send_ws_message(ClientMessage::Speed { factor: s });
+                }
+                RemoteButton::One => {
+                    recenter_action();
+                }
+                RemoteButton::A => {
+                    #[cfg(target_arch = "wasm32")]
+                    play_click();
+                    haptic_tap();
+                }
+                RemoteButton::B => haptic_rumble(),
+                RemoteButton::Home => haptic_medium(),
+                _ => haptic_tap(),
+            }
         }
         let action_str = match action {
             ButtonAction::Press => "Pressionado",
             ButtonAction::Release => "Solto",
         };
-        last_action.set(format!("{:?} ({})", button, action_str));
+        if button != RemoteButton::Minus && button != RemoteButton::Plus && button != RemoteButton::One {
+            last_action.set(format!("{:?} ({})", button, action_str));
+        }
 
         send_ws_message(ClientMessage::Button { button, action });
     };
@@ -101,22 +146,19 @@ pub fn RemoteView(room_id: String) -> Element {
     let start_sensors = move |_| {
         #[cfg(target_arch = "wasm32")]
         {
+            unlock_audio();
             spawn(async move {
                 match crate::sensors::orientation::wasm::request_sensor_permission().await {
                     Ok(granted) => {
                         if granted {
-                            status_message.set("Sensores ativos e calibrados!".to_string());
+                            status_message.set("Sensores ativos (Streaming 60Hz)!".to_string());
                             sensor_active.set(true);
+                            haptic_medium();
 
                             let sender_holder = ws_sender.read().clone();
-                            let res = crate::sensors::orientation::wasm::start_orientation_listener(move |data| {
-                                raw_orientation.set(data);
-                                let cal = calibration.read().apply(data);
-                                calibrated_orientation.set(cal);
-
-                                // Send motion to server
+                            let res = crate::sensors::orientation::wasm::start_controller_streaming(move |sample| {
                                 if let Some(ref sender) = *sender_holder.borrow() {
-                                    let _ = sender.unbounded_send(ClientMessage::Motion(cal));
+                                    let _ = sender.unbounded_send(ClientMessage::Sample(sample));
                                 }
                             });
 
@@ -124,11 +166,11 @@ pub fn RemoteView(room_id: String) -> Element {
                                 closure.forget();
                             }
                         } else {
-                            status_message.set("Permissão dos sensores foi negada.".to_string());
+                            status_message.set("Permissão dos sensores negada no navegador.".to_string());
                         }
                     }
-                    Err(err) => {
-                        status_message.set(format!("Erro ao ativar sensores: {:?}", err));
+                    Err(_) => {
+                        status_message.set("Aviso: No iOS/Safari os sensores exigem HTTPS.".to_string());
                     }
                 }
             });
@@ -140,26 +182,54 @@ pub fn RemoteView(room_id: String) -> Element {
         }
     };
 
-    // Calibration handler
-    let recenter = move |_| {
-        haptic_medium();
-        let current_raw = *raw_orientation.read();
-        calibration.write().calibrate_from(current_raw);
-        let cal = calibration.read().apply(current_raw);
-        calibrated_orientation.set(cal);
-        last_action.set("Centro Calibrado!".to_string());
-        send_ws_message(ClientMessage::CalibrateCenter);
+    // Virtual Touch Aiming Drag Handler
+    let mut on_touch_drag_move = move |x: f64, y: f64| {
+        if let Some((prev_x, prev_y)) = *last_touch_pos.read() {
+            let dx = x - prev_x;
+            let dy = y - prev_y;
+
+            let (curr_yaw, curr_pitch) = *virtual_angles.read();
+            let new_yaw = (curr_yaw + (dx * 0.15)).clamp(-24.0, 24.0);
+            let new_pitch = (curr_pitch - (dy * 0.15)).clamp(-16.0, 16.0);
+            virtual_angles.set((new_yaw, new_pitch));
+
+            let motion_sample = OrientationSample {
+                alpha: Some(new_yaw),
+                beta: Some(new_pitch),
+                gamma: Some(0.0),
+                heading: None,
+                quat: None,
+                motion: Some(MotionData {
+                    ax: 0.0,
+                    ay: 0.0,
+                    az: 0.0,
+                    rx: -dy * 2.0,
+                    ry: 0.0,
+                    rz: dx * 2.0,
+                }),
+                t: 0.0,
+            };
+            send_ws_message(ClientMessage::Sample(motion_sample));
+        }
+        last_touch_pos.set(Some((x, y)));
     };
 
-    let cal = *calibrated_orientation.read();
     let current_pid = *player_id.read();
+
+    let is_secure = {
+        #[cfg(target_arch = "wasm32")]
+        { crate::sensors::orientation::wasm::is_secure_context() }
+        #[cfg(not(target_arch = "wasm32"))]
+        { true }
+    };
+    let mut show_perm_guide = use_signal(|| false);
 
     rsx! {
         div {
             class: "wiimote-page",
             header {
                 class: "wiimote-top-bar",
-                h2 { "Wii Remote" }
+                h2 { "RustWii Remote" }
                 div {
                     class: "wiimote-top-tags",
                     span {
@@ -170,7 +240,15 @@ pub fn RemoteView(room_id: String) -> Element {
                 }
             }
 
-            // Sensor status & Calibration bar
+            // Insecure Context Warning (if not HTTPS / localhost)
+            if !is_secure {
+                div {
+                    class: "remote-insecure-warning",
+                    p { "⚠️ " b { "Aviso HTTP:" } " Navegadores bloqueiam o giroscópio em HTTP. Acesse via " b { "HTTPS (porta 8443)" } " para liberar os sensores!" }
+                }
+            }
+
+            // Sensor status & Activation bar
             div {
                 class: "sensor-card",
                 p { class: "status-text", "{status_message}" }
@@ -178,26 +256,74 @@ pub fn RemoteView(room_id: String) -> Element {
                     button {
                         class: "btn-sensor-activate",
                         onclick: start_sensors,
-                        "Ativar Sensores (Giroscópio)"
+                        "📡 Ativar Giroscópio (Motion 60Hz)"
                     }
                 } else {
                     div {
-                        class: "telemetry-panel",
-                        div { class: "telemetry-item", span { "Yaw (Z):" } b { "{cal.alpha:.1}°" } }
-                        div { class: "telemetry-item", span { "Pitch (X):" } b { "{cal.beta:.1}°" } }
-                        div { class: "telemetry-item", span { "Roll (Y):" } b { "{cal.gamma:.1}°" } }
+                        class: "telemetry-subbar",
+                        span { class: "telemetry-badge-active", "● Sensores Ativos (60Hz)" }
+                        button {
+                            class: "btn-recenter-mini",
+                            onclick: move |_| recenter_action(),
+                            "🎯 Calibrar Centro (Botão 1)"
+                        }
+                    }
+                }
+
+                // Quick Permission Help Button
+                button {
+                    class: "btn-perm-help-link",
+                    onclick: move |_| {
+                        let curr = *show_perm_guide.read();
+                        show_perm_guide.set(!curr);
+                    },
+                    "❓ Ajuda / Permissões do Celular"
+                }
+            }
+
+            // Permission Guide Popup
+            if *show_perm_guide.read() {
+                div {
+                    class: "remote-perm-guide-card",
+                    h4 { "📱 Como liberar o Giroscópio no Celular:" }
+                    ul {
+                        li {
+                            b { "1. Use HTTPS (Porta 8443): " }
+                            "No endereço do celular, use sempre " code { "https://" } " (ex: https://192.168.x.x:8443). Se aparecer aviso de certificado, toque em Avançado -> Continuar."
+                        }
+                        li {
+                            b { "2. No Android (Google Chrome): " }
+                            "Toque no menu (3 pontinhos) -> Configurações -> Configurações do site -> " b { "Sensores de movimento" } " -> selecione " b { "Permitido" } "."
+                        }
+                        li {
+                            b { "3. No iPhone (Safari): " }
+                            "Abra Ajustes -> Safari -> role até 'Acesso a Movimento e Orientação' e ative."
+                        }
+                        li {
+                            b { "4. Mira por Toque (Touch Aiming): " }
+                            "Você também pode deslizar o dedo na área do controle abaixo para mirar diretamente!"
+                        }
                     }
                     button {
-                        class: "btn-recenter",
-                        onclick: recenter,
-                        "Recentralizar / Calibrar"
+                        class: "btn-perm-guide-close",
+                        onclick: move |_| show_perm_guide.set(false),
+                        "Entendido"
                     }
                 }
             }
 
-            // Wiimote Chassis
+            // Wiimote Chassis (Also acts as virtual trackpad on drag)
             div {
                 class: "wiimote-chassis",
+                onpointerdown: move |evt| {
+                    last_touch_pos.set(Some((evt.client_coordinates().x, evt.client_coordinates().y)));
+                },
+                onpointermove: move |evt| {
+                    on_touch_drag_move(evt.client_coordinates().x, evt.client_coordinates().y);
+                },
+                onpointerup: move |_| {
+                    last_touch_pos.set(None);
+                },
 
                 // Player Slot Indicator Banner
                 if let Some(pid) = current_pid {

@@ -26,14 +26,19 @@ web-sys = { version = "0.3", features = [
     "CanvasRenderingContext2d",
     "DeviceOrientationEvent",
     "DeviceMotionEvent",
+    "DeviceAcceleration",
+    "DeviceRotationRate",
     "Location",
     "Navigator",
+    "Clipboard",
+    "Storage",
     "AudioContext",
     "OscillatorNode",
     "OscillatorType",
     "GainNode",
     "AudioParam",
     "AudioDestinationNode",
+    "Performance",
     "console",
 ] }
 wasm-bindgen = "0.2"
@@ -47,6 +52,8 @@ gloo-timers = { version = "0.3", features = ["futures"] }
 dioxus = { version = "0.6", features = ["fullstack", "server"] }
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.7", features = ["ws"] }
+axum-server = { version = "0.7", features = ["tls-rustls"] }
+rcgen = "0.13"
 tower-http = { version = "0.6", features = ["cors", "fs"] }
 
 [profile]

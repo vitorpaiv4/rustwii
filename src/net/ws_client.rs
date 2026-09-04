@@ -48,11 +48,10 @@ pub mod wasm {
             // Task to send messages from channel to WebSocket
             wasm_bindgen_futures::spawn_local(async move {
                 while let Some(msg) = rx.next().await {
-                    if let Ok(json) = serde_json::to_string(&msg) {
-                        if write_sink.send(Message::Text(json)).await.is_err() {
+                    if let Ok(json) = serde_json::to_string(&msg)
+                        && write_sink.send(Message::Text(json)).await.is_err() {
                             break;
                         }
-                    }
                 }
             });
 

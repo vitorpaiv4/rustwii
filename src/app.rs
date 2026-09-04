@@ -310,6 +310,171 @@ body {
     gap: 14px;
 }
 
+.wii-modal-pairing {
+    max-width: 540px;
+}
+
+.wii-mode-tabs {
+    display: flex;
+    background: #f1f5f9;
+    border-radius: 14px;
+    padding: 4px;
+    gap: 4px;
+    width: 100%;
+}
+
+.wii-tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.wii-tab-btn:hover {
+    color: #0284c7;
+}
+
+.wii-tab-btn.tab-active {
+    background: #ffffff;
+    color: #0284c7;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.wii-mode-help {
+    background: #f8fafc;
+    border-left: 4px solid #0284c7;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #334155;
+    text-align: left;
+    width: 100%;
+}
+
+.help-internet {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+}
+
+.help-warn {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+}
+
+.help-small {
+    font-size: 0.78rem;
+    color: #64748b;
+    margin-top: 4px;
+}
+
+.wii-tunnel-input-row {
+    margin-top: 8px;
+    width: 100%;
+}
+
+.wii-input-url {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 0.85rem;
+    outline: none;
+    font-family: monospace;
+    background: #ffffff;
+}
+
+.wii-input-url:focus {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.wii-tunnel-tip-box {
+    margin-top: 8px;
+    background: #ffffff;
+    border: 1px dashed #94a3b8;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    color: #475569;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.wii-tunnel-tip-box code {
+    background: #1e293b;
+    color: #38bdf8;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.wii-tunnel-tip-box .tip-title {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.wii-tunnel-tip-box .tip-or {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.wii-url-action-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.wii-url-action-bar .wii-pairing-url-link {
+    flex: 1;
+    margin-top: 0;
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-wii-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f1f5f9;
+    border: 1.5px solid #cbd5e1;
+    color: #475569;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-wii-copy:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.btn-wii-copy.btn-copied {
+    background: #10b981;
+    color: #ffffff;
+    border-color: #059669;
+}
+
 .wii-qrcode-container {
     display: flex;
     flex-direction: column;
@@ -746,6 +911,40 @@ body {
     margin-left: 4px;
 }
 
+.telemetry-subbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+    gap: 8px;
+}
+
+.telemetry-badge-active {
+    font-size: 0.78rem;
+    color: #16a34a;
+    font-weight: 700;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.btn-recenter-mini {
+    background: #0284c7;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(2,132,199,0.3);
+}
+
+.btn-recenter-mini:active {
+    background: #0369a1;
+}
+
 .btn-recenter {
     background: #f8fafc;
     border: 2px solid #0284c7;
@@ -760,6 +959,69 @@ body {
 .btn-recenter:active {
     background: #0284c7;
     color: white;
+}
+
+.remote-insecure-warning {
+    background: #fff7ed;
+    border: 2px solid #f97316;
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: #9a3412;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.btn-perm-help-link {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 6px;
+    padding: 4px;
+}
+
+.remote-perm-guide-card {
+    background: #ffffff;
+    border: 2px solid #0284c7;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 25px rgba(2, 132, 199, 0.15);
+    animation: fadeIn 0.2s ease;
+}
+
+.remote-perm-guide-card h4 {
+    margin: 0 0 10px 0;
+    color: #0f172a;
+    font-size: 0.95rem;
+}
+
+.remote-perm-guide-card ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.82rem;
+    color: #334155;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.btn-perm-guide-close {
+    width: 100%;
+    margin-top: 12px;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
 }
 
 /* Wiimote Physical Chassis */
